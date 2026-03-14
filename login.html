@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wow.js - 登录/注册</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            opacity: 0;
+            animation: fadeIn 1s ease-in forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .container { 
+            max-width: 400px; 
+            width: 100%; 
+            padding: 20px; 
+        }
+
+        .auth-box { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 10px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideUp 0.8s ease-out 0.3s forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo { 
+            text-align: center; 
+            font-size: 2rem; 
+            font-weight: bold; 
+            color: #00d9a5; 
+            margin-bottom: 2rem; 
+        }
+
+        .tabs { 
+            display: flex; 
+            margin-bottom: 2rem; 
+        }
+
+        .tab { 
+            flex: 1; 
+            padding: 1rem; 
+            text-align: center; 
+            cursor: pointer; 
+            border: none; 
+            background: #f5f5f5; 
+            font-size: 1rem; 
+            transition: all 0.3s;
+        }
+
+        .tab.active { 
+            background: #00d9a5; 
+            color: white; 
+        }
+
+        .tab:first-child { border-radius: 5px 0 0 5px; }
+        .tab:last-child { border-radius: 0 5px 5px 0; }
+
+        .form-group { 
+            margin-bottom: 1.5rem; 
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.5s; }
+        .form-group:nth-child(2) { animation-delay: 0.6s; }
+
+        .form-group label { 
+            display: block; 
+            margin-bottom: 0.5rem; 
+            color: #333; 
+        }
+
+        .form-group input { 
+            width: 100%; 
+            padding: 1rem; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            font-size: 1rem; 
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus { 
+            outline: none; 
+            border-color: #00d9a5; 
+        }
+
+        .submit-btn { 
+            width: 100%; 
+            padding: 1rem; 
+            background: #00d9a5; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            transition: background 0.3s;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.7s forwards;
+        }
+
+        .submit-btn:hover { background: #00b894; }
+
+        .message { 
+            padding: 1rem; 
+            margin-bottom: 1rem; 
+            border-radius: 5px; 
+            display: none; 
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.success { 
+            background: #d4edda; 
+            color: #155724; 
+            display: block; 
+        }
+
+        .message.error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            display: block; 
+        }
+
+        .back-link { 
+            text-align: center; 
+            margin-top: 1rem; 
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out 0.8s forwards;
+        }
+
+        .back-link a { 
+            color: #667eea; 
+            text-decoration: none; 
+        }
+
+        .hidden { display: none; }
+
+        .page-transition {
+            animation: pageFadeOut 0.5s ease-out forwards;
+        }
+
+        @keyframes pageFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="auth-box">
+            <div class="logo">wow.js</div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showLogin()">登录</button>
+                <button class="tab" onclick="showRegister()">注册</button>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="login-username" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="submit-btn">登录</button>
+            </form>
+
+            <form id="register-form" class="hidden">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="register-username" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="register-password" required>
+                </div>
+                <button type="submit" class="submit-btn">注册</button>
+            </form>
+
+            <div class="back-link">
+                <a href="index.html">返回首页</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLogin() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.querySelectorAll('.tab')[1].classList.remove('active');
+        }
+
+        function showRegister() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+            document.querySelectorAll('.tab')[0].classList.remove('active');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+        }
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message ' + type;
+            setTimeout(() => { msg.className = 'message'; }, 3000);
+        }
+
+        function handlePageTransition() {
+            document.body.classList.add('page-transition');
+            setTimeout(() => {
+                document.body.classList.remove('page-transition');
+            }, 500);
+        }
+
+        document.querySelectorAll('a[href^="http"], a[href^="/"]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (!this.getAttribute('href').startsWith('#')) {
+                    handlePageTransition();
+                }
+            });
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('登录成功！正在跳转...', 'success');
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    setTimeout(() => {
+                        if (data.user.isAdmin) {
+                            window.location.href = 'admin.html';
+                        } else {
+                            window.location.href = 'index.html';
+                        }
+                    }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('登录失败，请重试', 'error');
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('注册成功！请登录', 'success');
+                    setTimeout(() => { showLogin(); }, 1000);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('注册失败，请重试', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

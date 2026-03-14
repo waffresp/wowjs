@@ -1,0 +1,15 @@
+{
+  "name": "wow-js",
+  "version": "1.0.0",
+  "description": "wow.js website with Neon database",
+  "scripts": {
+    "build": "echo 'No build needed'"
+  },
+  "dependencies": {
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {},
+  "keywords": ["netlify", "neon", "database"],
+  "author": "Huwaff",
+  "license": "MIT"
+}

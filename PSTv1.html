@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PST v1</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        /* 视频背景 */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .video-background video {
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+        
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(245, 245, 245, 0.65);
+            z-index: 1;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #e8e8e8 0%, #d0d0d0 100%);
+            padding: 20px 25px;
+            border-bottom: 1px solid #c0c0c0;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header h1 { 
+            font-size: 22px; 
+            color: #333;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .header p { 
+            color: #666; 
+            font-size: 13px; 
+            margin-top: 5px;
+        }
+        
+        .content { padding: 20px; }
+        
+        .countdown {
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #e8e8e8 0%, #d8d8d8 100%);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #555;
+            animation: fadeIn 0.8s ease-out 0.3s both;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .countdown b { color: #333; font-size: 16px; }
+        
+        .server-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .server-table th {
+            background: linear-gradient(135deg, #f0f0f0 0%, #e5e5e5 100%);
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 13px;
+            color: #555;
+            border-bottom: 2px solid #d0d0d0;
+            font-weight: 600;
+        }
+        
+        .server-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+        
+        .server-table tr {
+            animation: slideInLeft 0.5s ease-out both;
+        }
+        
+        .server-table tr:nth-child(1) { animation-delay: 0.1s; }
+        .server-table tr:nth-child(2) { animation-delay: 0.2s; }
+        .server-table tr:nth-child(3) { animation-delay: 0.3s; }
+        .server-table tr:nth-child(4) { animation-delay: 0.4s; }
+        .server-table tr:nth-child(5) { animation-delay: 0.5s; }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .server-table tr:hover { 
+            background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .status-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        .status-fluent { background: #27ae60; box-shadow: 0 0 8px #27ae60; }
+        .status-normal { background: #2980b9; box-shadow: 0 0 8px #2980b9; }
+        .status-poor { background: #f39c12; box-shadow: 0 0 8px #f39c12; }
+        .status-terrible { background: #c0392b; box-shadow: 0 0 8px #c0392b; }
+        .status-testing { background: #95a5a6; animation: testingPulse 0.8s infinite; }
+        
+        @keyframes testingPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .ping { 
+            font-family: 'Consolas', monospace; 
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .ping-fluent { color: #27ae60; text-shadow: 0 0 5px rgba(39, 174, 96, 0.3); }
+        .ping-normal { color: #2980b9; text-shadow: 0 0 5px rgba(41, 128, 185, 0.3); }
+        .ping-poor { color: #f39c12; text-shadow: 0 0 5px rgba(243, 156, 18, 0.3); }
+        .ping-terrible { color: #c0392b; text-shadow: 0 0 5px rgba(192, 57, 43, 0.3); }
+        
+        /* IP地址可点击样式 */
+        .ip-address {
+            font-family: Consolas, monospace;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ip-address::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.3s ease;
+        }
+        
+        .ip-address:hover::before {
+            left: 100%;
+        }
+        
+        .ip-address:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .ip-address.copied {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            animation: copiedBlueFlash 0.6s ease;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.6);
+        }
+        
+        @keyframes copiedBlueFlash {
+            0% { 
+                transform: scale(1);
+                box-shadow: 0 0 0 rgba(79, 172, 254, 0);
+            }
+            30% { 
+                transform: scale(1.08);
+                box-shadow: 0 0 25px rgba(79, 172, 254, 0.8);
+            }
+            60% { 
+                transform: scale(0.98);
+            }
+            100% { 
+                transform: scale(1);
+                box-shadow: 0 0 15px rgba(79, 172, 254, 0.4);
+            }
+        }
+        
+        .copy-icon {
+            font-size: 12px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+        
+        .ip-address:hover .copy-icon {
+            opacity: 1;
+        }
+        
+        .port-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: Consolas, monospace;
+            margin-left: 8px;
+            color: #555;
+            border: 1px solid #c0c0c0;
+            animation: popIn 0.4s ease-out;
+        }
+        
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        /* 提示框样式 */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 5px 25px rgba(0, 123, 255, 0.4);
+            z-index: 1000;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            border: 1px solid rgba(79, 172, 254, 0.3);
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .toast .title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #4facfe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .toast .content {
+            line-height: 1.5;
+            color: #e0e0e0;
+        }
+        
+        .toast .close-btn {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 2px 6px;
+            transition: color 0.2s;
+        }
+        
+        .toast .close-btn:hover {
+            color: #4facfe;
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, #f0f0f0 0%, #e5e5e5 100%);
+            padding: 15px 25px;
+            border-top: 1px solid #d0d0d0;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            animation: slideUp 0.6s ease-out 0.5s both;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .test-btn {
+            padding: 10px 25px;
+            background: linear-gradient(135deg, #555 0%, #444 100%);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .test-btn:hover {
+            background: linear-gradient(135deg, #444 0%, #333 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        
+        .test-btn:active { transform: translateY(0); }
+        
+        .legend {
+            margin-left: 15px;
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        @media (max-width: 600px) {
+            .server-table { font-size: 12px; }
+            .server-table th, .server-table td { padding: 10px; }
+            .port-badge { display: block; margin: 5px 0 0 0; }
+            .legend { display: block; margin: 10px 0 0 0; }
+            .toast { font-size: 13px; padding: 12px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 视频背景 -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="https://polyfield.net/assets/landing.mp4" type="video/mp4">
+            Man,just let codes FLYYYYY OH YEHHHHHHH!
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+    
+    <!-- 提示框 -->
+    <div class="toast" id="toast">
+        <button class="close-btn" onclick="hideToast()">×</button>
+        <div class="title">已复制到剪贴板</div>
+        <div class="content" id="toastContent"></div>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>PolyServerTool v1</h1>
+            <p>By w3(ghzs@kytonc4)</p>
+        </div>
+        
+        <div class="content">
+            <div class="countdown">
+                下次自动测试：<b id="countdown">8</b> 秒
+            </div>
+            
+            <table class="server-table">
+                <thead>
+                    <tr>
+                        <th>状态</th>
+                        <th>服务器名称</th>
+                        <th>IP 地址（点击可复制）</th>
+                        <th>延迟</th>
+                    </tr>
+                </thead>
+                <tbody id="serverList"></tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <button class="test-btn" onclick="testAll()">点击测试所有</button>
+            <span class="legend">
+                <100ms流畅 | 100-350ms一般 | 350-600ms差 | >600ms极差
+            </span>
+        </div>
+    </div>
+
+    <script>
+        const AUTO_PORTS = [
+            80, 443, 8080, 8443, 8000, 8888,
+            25565, 27015, 27016, 27017, 27018, 27019, 27020,
+            7777, 7778, 7779, 11211, 3074, 3478, 3479,
+            4321, 5060, 5061, 6667, 9987, 10000, 11000,
+            12000, 12001, 12002, 20000,
+            21, 22, 23, 25, 53, 110, 143, 993, 995, 3306, 5432, 6379
+        ];
+
+        const SERVERS = [
+            { 
+                id: 1, 
+                name: 'izanserver.com 1服/64', 
+                ip: '77.90.16.199',
+                copyPort: 5500,
+                ping: null, 
+                status: 'unknown',
+                detectedPort: null
+            },
+            { 
+                id: 2, 
+                name: 'izanserver.com 2服/128', 
+                ip: '77.90.16.67',
+                copyPort: 7798,
+                ping: null, 
+                status: 'unknown',
+                detectedPort: null
+            },
+            { 
+                id: 3, 
+                name: 'Greece希腊🇬🇷 1服/64', 
+                ip: '5.79.110.94',
+                copyPort: 7777,
+                ping: null, 
+                status: 'unknown',
+                detectedPort: null
+            },
+            { 
+                id: 4, 
+                name: 'Greece希腊🇬🇷 2服/64', 
+                ip: '5.79.110.94',
+                copyPort: 7780,
+                ping: null, 
+                status: 'unknown',
+                detectedPort: null
+            },
+            { 
+                id: 5, 
+                name: 'USA-Brazil 24/7 服 /64', 
+                ip: '23.230.253.196',
+                copyPort: 7777,
+                ping: null, 
+                status: 'unknown',
+                detectedPort: null
+            }
+        ];
+        // ==================================================
+
+        let countdown = 8;
+        let timer = null;
+
+        function init() {
+            render();
+            startAutoTest();
+            setTimeout(testAll, 500);
+        }
+
+        function getStatus(ping) {
+            if (ping === null) return 'unknown';
+            if (ping < 100) return 'fluent';
+            if (ping < 350) return 'normal';
+            if (ping < 600) return 'poor';
+            return 'terrible';
+        }
+
+        function getStatusText(status) {
+            return { 
+                fluent:'流畅', normal:'一般', poor:'差', 
+                terrible:'极差', testing:'测试中', unknown:'-' 
+            }[status];
+        }
+
+        // 显示提示框
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const content = document.getElementById('toastContent');
+            content.textContent = message;
+            toast.classList.add('show');
+            setTimeout(hideToast, 5000);
+        }
+
+        // 隐藏提示框
+        function hideToast() {
+            document.getElementById('toast').classList.remove('show');
+        }
+
+        // 复制文本到剪贴板
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                return true;
+            }
+        }
+
+        // 点击复制IP
+        function copyServerIP(server) {
+            const copyAddress = `${server.ip}:${server.copyPort}`;
+            copyToClipboard(copyAddress).then(() => {
+                // 视觉反馈 - 蓝色动画
+                const ipEl = document.querySelector(`[data-id="${server.id}"]`);
+                if (ipEl) {
+                    ipEl.classList.add('copied');
+                    setTimeout(() => ipEl.classList.remove('copied'), 800);
+                }
+                // 显示提示
+                showToast('如果你的服务器搜索器不能搜索到该服务器，请复制该ip地址到LAN联机模式（局域网模式），并粘贴至底部地址栏，玩的愉快！');
+            });
+        }
+
+        // 测试单个端口的连接
+        async function testPort(ip, port, protocol = 'http') {
+            const start = performance.now();
+            try {
+                const ctrl = new AbortController();
+                const timeout = setTimeout(() => ctrl.abort(), 2000);
+                await fetch(`${protocol}://${ip}:${port}/`, {
+                    method: 'HEAD',
+                    signal: ctrl.signal,
+                    mode: 'no-cors',
+                    cache: 'no-store'
+                });
+                clearTimeout(timeout);
+                return Math.round(performance.now() - start);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // 自动探测最佳端口
+        async function detectBestPort(server) {
+            const ports = server.detectPorts || AUTO_PORTS;
+            
+            for (const proto of ['http', 'https']) {
+                const ping = await testPort(server.ip, '', proto);
+                if (ping !== null) {
+                    return { port: proto === 'https' ? 443 : 80, ping, protocol: proto };
+                }
+            }
+            
+            for (const port of ports) {
+                for (const proto of ['http', 'https']) {
+                    const ping = await testPort(server.ip, port, proto);
+                    if (ping !== null) {
+                        return { port, ping, protocol: proto };
+                    }
+                }
+            }
+            return null;
+        }
+
+        async function testServer(server) {
+            server.status = 'testing';
+            server.detectedPort = null;
+            render();
+            
+            const result = await detectBestPort(server);
+            
+            if (result) {
+                server.ping = result.ping;
+                server.detectedPort = result.port;
+                server.status = getStatus(result.ping);
+            } else {
+                server.ping = null;
+                server.detectedPort = null;
+                server.status = 'terrible';
+            }
+            render();
+        }
+
+        async function testAll() {
+            countdown = 8;
+            document.getElementById('countdown').textContent = countdown;
+            for (const srv of SERVERS) {
+                await testServer(srv);
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        function startAutoTest() {
+            timer = setInterval(() => {
+                countdown--;
+                if (countdown <= 0) {
+                    countdown = 8;
+                    testAll();
+                }
+                document.getElementById('countdown').textContent = countdown;
+            }, 1000);
+        }
+
+        function render() {
+            const tbody = document.getElementById('serverList');
+            
+            tbody.innerHTML = SERVERS.map(srv => {
+                const st = srv.status;
+                const pingCls = `ping-${st}`;
+                const statusCls = `status-${st}`;
+                const pingTxt = srv.ping !== null ? `${srv.ping} ms` : '-';
+                const portBadge = srv.detectedPort 
+                    ? `<span class="port-badge">探测:${srv.detectedPort}</span>` 
+                    : '';
+                
+                const copyAddress = `${srv.ip}:${srv.copyPort}`;
+                
+                return `
+                    <tr>
+                        <td><span class="status-dot ${statusCls}"></span>${getStatusText(st)}</td>
+                        <td style="font-weight: 600;">${srv.name}</td>
+                        <td>
+                            <span class="ip-address" 
+                                  data-id="${srv.id}" 
+                                  onclick="copyServerIP(SERVERS.find(s => s.id === ${srv.id}))"
+                                  title="点击复制: ${copyAddress}">
+                                ${srv.ip}
+                                <span class="copy-icon">📋</span>
+                            </span>
+                            ${portBadge}
+                        </td>
+                        <td class="ping ${pingCls}">${pingTxt}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (timer) clearInterval(timer);
+        });
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

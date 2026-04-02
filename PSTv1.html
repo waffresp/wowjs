@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PST v1</title>
+    <title>PST v1.1</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -409,7 +409,7 @@
         
         <div class="content">
             <div class="countdown">
-                下次自动测试：<b id="countdown">8</b> 秒
+                下次自动测试：<b id="countdown">30</b> 秒
             </div>
             
             <table class="server-table">
@@ -488,17 +488,26 @@
                 ping: null, 
                 status: 'unknown',
                 detectedPort: null
-            }
+            },
+            { 
+                id: 6, 
+                name: 'AS新加坡🇸🇬 3 服 /64 /有机器人', 
+                ip: '152.69.208.96',
+                copyPort: 9092,
+                ping: 300, 
+                status: 'poor',
+                detectedPort: null
+            } 
         ];
         // ==================================================
 
-        let countdown = 8;
+        let countdown = 30;
         let timer = null;
 
         function init() {
             render();
             startAutoTest();
-            setTimeout(testAll, 500);
+            setTimeout(testAll, 5000);
         }
 
         function getStatus(ping) {
@@ -624,7 +633,7 @@
         }
 
         async function testAll() {
-            countdown = 8;
+            countdown = 30;
             document.getElementById('countdown').textContent = countdown;
             for (const srv of SERVERS) {
                 await testServer(srv);
@@ -636,7 +645,7 @@
             timer = setInterval(() => {
                 countdown--;
                 if (countdown <= 0) {
-                    countdown = 8;
+                    countdown = 30;
                     testAll();
                 }
                 document.getElementById('countdown').textContent = countdown;
